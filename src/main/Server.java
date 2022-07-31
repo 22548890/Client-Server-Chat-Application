@@ -13,7 +13,7 @@ public class Server {
     public void startServer() {
         try {
             while (!serverSocket.isClosed()){
-               Socket socket = serverSocket.accept();
+                Socket socket = serverSocket.accept();
                 System.out.println("New Client Connected!");
                 ClientHandler clientHandler = new ClientHandler(socket);
 
@@ -22,13 +22,13 @@ public class Server {
 
             }
         } catch (IOException e) {
-
+            closeServerSocket();
         }
     }
 
     public void closeServerSocket() {
         try {
-            if ( serverSocket != null ) {
+            if (serverSocket != null) {
                 serverSocket.close();
             }
         } catch (IOException e) {
