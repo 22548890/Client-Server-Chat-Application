@@ -38,7 +38,19 @@ public class ClientHandler implements Runnable {
         while (socket.isConnected()) {
             try{
                 messageFromClient = (Message) objectInputStream.readObject();
-                sendMessage(messageFromClient);
+                if (messageFromClient != null) {
+                    if (messageFromClient.text().equals("\\list")) {
+                        String text = "List of current users -\n";
+                        for (ClientHandler handler : clientHandlers) {
+                            text += "        " + handler.clientUsername + "\n";
+                        }
+                        text = text.substring(0, text.length()-1);
+                        Message msg = new Message(text, "SERVER", clientUsername);
+                        sendMessage(msg);
+                    } else {
+                        sendMessage(messageFromClient);
+                    }
+                }
             } catch (IOException e){
                 closeEverything(socket, objectInputStream, objectOutputStream);
                 break; //exit while

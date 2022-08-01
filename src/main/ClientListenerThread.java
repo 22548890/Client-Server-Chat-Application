@@ -30,7 +30,7 @@ public class ClientListenerThread implements Runnable {
 
     public void printMessage(Message message) {
         String msg = message.from();
-        if (message.to() != null) {
+        if (message.to() != null && !message.from().equals("SERVER")) {
             msg += " whispers to " + message.to();
         }
         msg += ": " + message.text();

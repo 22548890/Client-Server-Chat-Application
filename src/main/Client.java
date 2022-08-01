@@ -33,7 +33,7 @@ public class Client {
             while(socket.isConnected()){
                 String textToSend = scanner.nextLine();
                 Message messageToSend=  null;
-                if (textToSend.equals("exit")) {
+                if (textToSend.equals("\\exit")) {
                     closeEverything(socket, objectInputStream, objectOutputStream);
                     System.exit(0);
                 } else if (textToSend.startsWith("@")) { // Whisper
