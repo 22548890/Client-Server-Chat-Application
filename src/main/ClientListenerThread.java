@@ -21,7 +21,7 @@ public class ClientListenerThread implements Runnable {
             try{
                 printMessage((Message) objectInputStream.readObject());
             } catch (IOException e) {
-                closeEverything(socket, objectInputStream, objectOutputStream);
+                closeEverything();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
@@ -37,21 +37,26 @@ public class ClientListenerThread implements Runnable {
         System.out.println(msg);
     }
 
-    public void closeEverything(Socket socket, ObjectInputStream ois, ObjectOutputStream ous) {  
+    public void closeEverything() {    
         try {
-            if (ois != null) {
-                ois.close();
+            if (objectInputStream != null) {
+                objectInputStream.close();
             }
+        } catch (IOException e) {}
 
-            if (ous != null) {
-                ous.close();
+        try {
+            if (objectOutputStream != null) {
+                objectOutputStream.close();
             }
+        } catch (IOException e) {}
 
+        try {
             if (socket != null) {
                 socket.close();
             }
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+        } catch (IOException e) {}
+
+        System.out.println("SERVER: Shut down");
+        System.exit(0);
     }
 }

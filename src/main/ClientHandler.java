@@ -20,13 +20,36 @@ public class ClientHandler implements Runnable {
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
 
             this.clientUsername = ((Message) objectInputStream.readObject()).text();//waits for message to be sent
-            clientHandlers.add(this);
-            sendMessage(new Message(clientUsername + " has entered the chat!","SERVER"));
+        
         } catch (IOException e){
-            closeEverything(socket, objectInputStream, objectOutputStream);
+            closeEverything();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public void checkUsername() { 
+        outer: while (true) {
+            for (ClientHandler handler : clientHandlers) {
+                if (handler.clientUsername.equals(this.clientUsername)) {
+                    try {
+                        this.objectOutputStream.writeObject(new Message("Username already exists!\nEnter your username: ", "SERVER"));
+                        this.objectOutputStream.flush();
+
+                        this.clientUsername = ((Message) objectInputStream.readObject()).text();
+
+                    } catch (IOException e) {
+                        closeEverything();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    continue outer;
+                }
+            }
+            break;
+        }
+        clientHandlers.add(this);
+        sendMessage(new Message(clientUsername + " has entered the chat!","SERVER"));
     }
 
     @Override
@@ -52,7 +75,7 @@ public class ClientHandler implements Runnable {
                     }
                 }
             } catch (IOException e){
-                closeEverything(socket, objectInputStream, objectOutputStream);
+                closeEverything();
                 break; //exit while
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
@@ -63,41 +86,65 @@ public class ClientHandler implements Runnable {
     }
 
     public void sendMessage(Message messageToSend) {
-        for (ClientHandler clientHandler : clientHandlers){
-            try{
-                if (messageToSend.to() == null) {   // broadcast
+        if (messageToSend.to() == null) {   // broadcast
+            for (ClientHandler clientHandler : clientHandlers){
+                try{ 
                     clientHandler.objectOutputStream.writeObject(messageToSend);
-                    clientHandler.objectOutputStream.flush();//manual clear before it fills
-                } else {    // whisper
-                    if (clientHandler.clientUsername.equals(messageToSend.to()) || clientHandler.clientUsername.equals(clientUsername)){
-                        clientHandler.objectOutputStream.writeObject(messageToSend);
-                        clientHandler.objectOutputStream.flush();//manual clear before it fills
-                    }
+                    clientHandler.objectOutputStream.flush();//manual clear before it fills   
+                } catch (IOException e){
+                    closeEverything();
                 }
-            } catch (IOException e){
-                closeEverything(socket, objectInputStream, objectOutputStream);
+            }
+        } else {    // whisper
+            ClientHandler user = null;
+            for (ClientHandler clientHandler : clientHandlers){
+                if (clientHandler.clientUsername.equals(messageToSend.to())) {
+                    user = clientHandler;
+                }
+            }
+            if (user != null) {
+                try{   
+                    user.objectOutputStream.writeObject(messageToSend);
+                    user.objectOutputStream.flush();//manual clear before it fills
+
+                    if (!user.equals(this)) {
+                        this.objectOutputStream.writeObject(messageToSend);
+                        this.objectOutputStream.flush();
+                    }
+                } catch (IOException e){
+                    closeEverything();
+                }
+            } else {
+                try {
+                    this.objectOutputStream.writeObject(new Message("User, \"" + messageToSend.to() + "\", does not exist.", "SERVER"));
+                    this.objectOutputStream.flush();
+                } catch (IOException e) {
+                    closeEverything();
+                }
             }
         }
     }
 
-    public void closeEverything(Socket socket, ObjectInputStream ois, ObjectOutputStream ous) {
+    public void closeEverything() {
         removeClientHandler();
         try {
-            if (ois != null) {
-                ois.close();
+            if (objectInputStream != null) {
+                objectInputStream.close();
             }
+        } catch (IOException e) {}
 
-            if (ous != null) {
-                ous.close();
+        try {
+            if (objectOutputStream != null) {
+                objectOutputStream.close();
             }
+        } catch (IOException e) {}
 
+        try {
             if (socket != null) {
                 socket.close();
             }
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        }
+        } catch (IOException e) {}
+    }
 
     public void removeClientHandler() {
         clientHandlers.remove(this);

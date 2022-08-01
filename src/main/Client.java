@@ -19,7 +19,7 @@ public class Client {
             
             this.username = username;
         } catch (IOException e) {
-            closeEverything(socket, objectInputStream, objectOutputStream);
+            closeEverything();
         }
     }
 
@@ -34,8 +34,7 @@ public class Client {
                 String textToSend = scanner.nextLine();
                 Message messageToSend=  null;
                 if (textToSend.equals("\\exit")) {
-                    closeEverything(socket, objectInputStream, objectOutputStream);
-                    System.exit(0);
+                    closeEverything();
                 } else if (textToSend.startsWith("@")) { // Whisper
                     String str[] = textToSend.split(" ", 2);
                     String clientTo = str[0].substring(1);
@@ -49,7 +48,7 @@ public class Client {
             }
 
         }  catch (IOException e) {
-            closeEverything(socket, objectInputStream, objectOutputStream);
+            closeEverything();
         }
      }
      public void listenForMessage() {
@@ -59,23 +58,26 @@ public class Client {
      }
 
      
-    public void closeEverything(Socket socket, ObjectInputStream ois, ObjectOutputStream ous) {
-        
+    public void closeEverything() {
         try {
-            if (ois != null) {
-                ois.close();
+            if (objectInputStream != null) {
+                objectInputStream.close();
             }
+        } catch (IOException e) {}
 
-            if (ous != null) {
-                ous.close();
+        try {
+            if (objectOutputStream != null) {
+                objectOutputStream.close();
             }
+        } catch (IOException e) {}
 
+        try {
             if (socket != null) {
                 socket.close();
             }
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+        } catch (IOException e) {}
+
+        System.exit(0);
     }
 
     public static void main(String[] args) throws IOException {
@@ -83,6 +85,7 @@ public class Client {
         System.out.println("Enter your username: ");
         String username = scanner.nextLine();
         Socket socket = new Socket("localhost", 1234);
+
         Client client = new Client(socket, username);
         client.listenForMessage();
         client.sendMessage();
