@@ -1,6 +1,15 @@
 # <center> Project 1: A Client-Server Chat Program </center>
 
-<br/>
-<br/>
+Chris Langevelt 23632135
 
-## Sources:
+Markus Sass 22548890
+
+
+
+## Server Instructions:
+java Server 'port'
+
+## Client Instructions:
+java ClientGUI
+
+*follow prompts
