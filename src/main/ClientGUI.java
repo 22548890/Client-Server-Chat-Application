@@ -4,13 +4,60 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class Client {
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+public class ClientGUI implements ActionListener {
     private Socket socket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
     private String username;
+    private String strAllMessages="";
+    private String msg="";
+    private JFrame frame;
+
+    private JTextArea  enteredText;
+    private JTextField typedText;
+    static ClientGUI client;
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        //get and send text from typedText.getText()
+        msg=typedText.getText();
+        // strAllMessages+=msg+"\n";
+        // enteredText.setText(strAllMessages);
+        
+        client.sendMessage(msg);
+
+        typedText.setText("");
+        typedText.requestFocusInWindow();
+        
+    }
     
-    public Client(Socket socket, String username) {
+    public ClientGUI(Socket socket, String username) {
+        frame = new JFrame();
+
+        JButton btn = new JButton("send");
+        btn.addActionListener(this);
+        
+        enteredText = new JTextArea(10, 32);
+        typedText   = new JTextField(32);
+
+        enteredText.setEditable(false);
+        enteredText.setBackground(Color.LIGHT_GRAY);
+        typedText.addActionListener(this);
+
+        Container content = frame.getContentPane();
+        content.add(new JScrollPane(enteredText), BorderLayout.CENTER);
+        content.add(typedText, BorderLayout.SOUTH);
+        typedText.requestFocusInWindow();
+
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setTitle("Client: "+username);
+        frame.pack();
+        frame.setVisible(true);
+
         try {
             this.socket = socket;
             
@@ -23,15 +70,12 @@ public class Client {
         }
     }
 
-    public void sendMessage() {
+    public void sendMessage(String msg) {
         try{
-            objectOutputStream.writeObject(new Message(username, username));
-            objectOutputStream.flush();
+            
 
-            Scanner scanner = new Scanner(System.in);
-
-            while(socket.isConnected()){
-                String textToSend = scanner.nextLine();
+            if(socket.isConnected()) {
+                String textToSend = msg;
                 Message messageToSend=  null;
                 if (textToSend.equals("\\exit")) {
                     closeEverything(socket, objectInputStream, objectOutputStream);
@@ -53,7 +97,7 @@ public class Client {
         }
      }
      public void listenForMessage() {
-        ClientListenerThread clientListenerThread = new ClientListenerThread(socket, objectInputStream, objectOutputStream);
+        ClientListenerThread clientListenerThread = new ClientListenerThread(socket, objectInputStream, objectOutputStream, enteredText);
         Thread thread = new Thread(clientListenerThread);
         thread.start(); //waiting for broadcasted msgs
      }
@@ -79,13 +123,18 @@ public class Client {
     }
 
     public static void main(String[] args) throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter your username: ");
-        String username = scanner.nextLine();
-        Socket socket = new Socket("localhost", 1234);
-        ClientGUI client = new ClientGUI(socket, username);
+        
+        String username= JOptionPane.showInputDialog("Enter your unique username: ");
+        String port= JOptionPane.showInputDialog("Enter the port: ", "1234");
+
+        
+        Socket socket = new Socket("localhost", Integer.parseInt(port));
+        client = new ClientGUI(socket, username);
+        client.objectOutputStream.writeObject(new Message(username, username));
+        client.objectOutputStream.flush();
+        
         client.listenForMessage();
-        client.sendMessage();
+        //client.sendMessage();
     }
 }
 

@@ -3,16 +3,20 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import javax.swing.JTextArea;
+
 public class ClientListenerThread implements Runnable {
 
     private Socket socket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
+    private JTextArea enteredText;
 
-    public ClientListenerThread(Socket socket, ObjectInputStream objectInputStream, ObjectOutputStream objectOutputStream) {
+    public ClientListenerThread(Socket socket, ObjectInputStream objectInputStream, ObjectOutputStream objectOutputStream, JTextArea enteredText) {
         this.socket = socket;
         this.objectInputStream = objectInputStream;
         this.objectOutputStream = objectOutputStream;
+        this.enteredText = enteredText;
     }
 
     @Override
@@ -21,7 +25,7 @@ public class ClientListenerThread implements Runnable {
             try{
                 printMessage((Message) objectInputStream.readObject());
             } catch (IOException e) {
-                closeEverything(socket, objectInputStream, objectOutputStream);
+                closeEverything();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
@@ -35,23 +39,29 @@ public class ClientListenerThread implements Runnable {
         }
         msg += ": " + message.text();
         System.out.println(msg);
+        enteredText.insert(msg + "\n", enteredText.getText().length());
     }
 
-    public void closeEverything(Socket socket, ObjectInputStream ois, ObjectOutputStream ous) {  
+    public void closeEverything() {    
         try {
-            if (ois != null) {
-                ois.close();
+            if (objectInputStream != null) {
+                objectInputStream.close();
             }
+        } catch (IOException e) {}
 
-            if (ous != null) {
-                ous.close();
+        try {
+            if (objectOutputStream != null) {
+                objectOutputStream.close();
             }
+        } catch (IOException e) {}
 
+        try {
             if (socket != null) {
                 socket.close();
             }
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+        } catch (IOException e) {}
+
+        System.out.println("SERVER: Shut down");
+        System.exit(0);
     }
 }

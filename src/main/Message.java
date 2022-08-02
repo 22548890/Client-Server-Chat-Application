@@ -22,3 +22,4 @@ public class Message implements Serializable {
     public String to() { return to; }
 
 }
+
