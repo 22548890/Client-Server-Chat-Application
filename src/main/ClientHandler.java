@@ -49,7 +49,20 @@ public class ClientHandler implements Runnable {
             break;
         }
         clientHandlers.add(this);
+        
         sendMessage(new Message(clientUsername + " has entered the chat!","SERVER"));
+
+        String[] ls = new String[clientHandlers.size()];
+        int i = 0;
+        for (ClientHandler handler : clientHandlers) {
+            ls[i++] = handler.clientUsername;
+        }
+        try {
+            this.objectOutputStream.writeObject(ls);
+            this.objectOutputStream.flush();
+        } catch (IOException e) {
+            closeEverything();
+        }
     }
 
     @Override
@@ -63,9 +76,9 @@ public class ClientHandler implements Runnable {
                 messageFromClient = (Message) objectInputStream.readObject();
                 if (messageFromClient != null) {
                     if (messageFromClient.text().equals("\\list")) {
-                        String text = "List of current users -\n";
+                        String text = "List of current users:\n";
                         for (ClientHandler handler : clientHandlers) {
-                            text += "        " + handler.clientUsername + "\n";
+                            text += handler.clientUsername + "\n";
                         }
                         text = text.substring(0, text.length()-1);
                         Message msg = new Message(text, "SERVER", clientUsername);

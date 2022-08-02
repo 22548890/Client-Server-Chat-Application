@@ -49,7 +49,7 @@ public class ClientGUI implements ActionListener {
         //TODO add all 
         listModel = new DefaultListModel();
         listModel.addElement("Online Users:");
-        listModel.addElement(username);
+        // listModel.addElement(username);
         //listModel.remove("")
 
         usersList = new JList(listModel);
@@ -67,7 +67,6 @@ public class ClientGUI implements ActionListener {
         typedText.requestFocusInWindow();
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setTitle("Client: "+username);
         frame.pack();
         frame.setVisible(true);
 
@@ -85,8 +84,6 @@ public class ClientGUI implements ActionListener {
 
     public void sendMessage(String msg) {
         try{
-            
-
             if(socket.isConnected()) {
                 String textToSend = msg;
                 Message messageToSend=  null;
@@ -98,10 +95,6 @@ public class ClientGUI implements ActionListener {
                     String clientTo = str[0].substring(1);
                     textToSend = str[1];
                     messageToSend = new Message(textToSend, username, clientTo);
-                }
-                else if(textToSend.equals("\\addUser")) {//to remove just testing
-                   listModel.addElement("New User added");   
-                   
                 } else {
                     messageToSend = new Message(textToSend, username);
                 }
@@ -114,7 +107,7 @@ public class ClientGUI implements ActionListener {
         }
      }
      public void listenForMessage() {
-        ClientListenerThread clientListenerThread = new ClientListenerThread(socket, objectInputStream, objectOutputStream, enteredText);
+        ClientListenerThread clientListenerThread = new ClientListenerThread(socket, objectInputStream, objectOutputStream, enteredText, listModel, frame);
         Thread thread = new Thread(clientListenerThread);
         thread.start(); //waiting for broadcasted msgs
      }
@@ -141,12 +134,46 @@ public class ClientGUI implements ActionListener {
 
     public static void main(String[] args) throws IOException {
         
-        String username= JOptionPane.showInputDialog("Enter your unique username: ");
-        String port= JOptionPane.showInputDialog("Enter the port: ", "1234");
-
-        
-        Socket socket = new Socket("localhost", Integer.parseInt(port));
+        // if (args.length != 2) {
+        //     System.out.println("Usage: java Client <host_IP_address> <port_number>");
+        //     System.exit(0);
+        // }
+        Socket socket= null;
+        String username;
+        while (true) {
+            String ip = JOptionPane.showInputDialog("Enter the IP address: ", "localhost");
+            if (ip == null) {
+                System.exit(0);
+            }
+            String port = JOptionPane.showInputDialog("Enter the port number: ", "1234");
+            if (port == null) {
+                System.exit(0);
+            }
+            username = JOptionPane.showInputDialog("Enter your unique username: ");
+            if (username == null) {
+                System.exit(0);
+            }
+            while (username.isBlank() || !username.matches("^[0-9A-Za-z]*$")) {
+                username = JOptionPane.showInputDialog("Enter your unique username: ", "Illegal Username!");
+                if (username == null) {
+                    System.exit(0);
+                }
+            }
+            try {
+                Timeout timeout = new Timeout();
+                Thread t = new Thread(timeout);
+                t.start();
+                socket = new Socket(ip, Integer.parseInt(port));
+                t.interrupt();
+            } catch (Exception e) {
+                JFrame frame = new JFrame();
+                JOptionPane.showMessageDialog(frame, "Invalid IP address or invalid port number");
+                continue;
+            }
+            break;
+        }
         client = new ClientGUI(socket, username);
+        
         client.objectOutputStream.writeObject(new Message(username, username));
         client.objectOutputStream.flush();
         
