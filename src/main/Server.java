@@ -39,7 +39,17 @@ public class Server {
     }
     
     public static void main(String[] args) throws IOException {
-        ServerSocket serverSocket = new ServerSocket(1234);
+        if (args.length != 1) {
+            System.out.println("Usage: java Server <port_number>");
+            System.exit(0);
+        }
+        int port = Integer.parseInt(args[0]);
+        if (port < 1 || port > 65535) {
+            System.out.println("Port number must be between 1 and 65535");
+            System.exit(0);
+        }
+
+        ServerSocket serverSocket = new ServerSocket(port);
         Server server = new Server(serverSocket);
         server.startServer();
         

@@ -81,12 +81,22 @@ public class Client {
     }
 
     public static void main(String[] args) throws IOException {
+        if (args.length != 2) {
+            System.out.println("Usage: java Client <host_IP_address> <port_number>");
+            System.exit(0);
+        }
+        Socket socket= null;
+        try {
+            socket = new Socket(args[0], Integer.parseInt(args[1]));
+        } catch (Exception e) {
+            System.out.println("Invalid IP address or invalid port number");
+            System.exit(0);
+        }
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter your username: ");
         String username = scanner.nextLine();
-        Socket socket = new Socket("localhost", 1234);
-
         Client client = new Client(socket, username);
+        
         client.listenForMessage();
         client.sendMessage();
     }
