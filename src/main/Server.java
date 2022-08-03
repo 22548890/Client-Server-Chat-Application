@@ -2,14 +2,27 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+/** 
+ * Class for Server 
+ * 
+ * Compiling in terminal: javac Server.java
+ * Usage in terminal:     java Server <port_number>
+ */
 public class Server {
 
     private ServerSocket serverSocket;
-    
+
+    /** 
+     * Constructor for ServerSocket
+     * @param serverSocket assign the socket to this instance of server
+     */
     public Server(ServerSocket serverSocket){
         this.serverSocket = serverSocket;
     }
 
+    /** 
+     * The method that creates threads for handling each client
+     */
     public void startServer() {
         try {
             while (!serverSocket.isClosed()){
@@ -28,6 +41,9 @@ public class Server {
         }
     }
 
+    /** 
+     * Method that closes server socket
+     */
     public void closeServerSocket() {
         try {
             if (serverSocket != null) {
@@ -38,6 +54,12 @@ public class Server {
         }
     }
     
+    
+    /** 
+     * Checks for valid port number
+     * @param args should only contain port number
+     * @throws IOException regarding serverSocket creation
+     */
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             System.out.println("Usage: java Server <port_number>");

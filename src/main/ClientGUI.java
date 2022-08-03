@@ -2,32 +2,40 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
+/** 
+ * Main class for clients and gui
+ * 
+ * Compiling in terminal: javac ClientGUI.java
+ * Usage in terminal:     java ClientGUI
+ */
 public class ClientGUI implements ActionListener {
     private Socket socket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
     private String username;
-    //private String strAllMessages="";
     private String msg="";
     private JFrame frame;
 
     private JTextArea  enteredText;
     private JTextField typedText;
-    private DefaultListModel listModel;
-    private JList usersList;
+    private DefaultListModel<String> listModel;
+    private JList<String> usersList;
     static ClientGUI client; 
 
+    
+    /** 
+     * Performs actions regarding the GUI
+     * 
+     * @param e for the action performed
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         //get and send text from typedText.getText()
         msg=typedText.getText();
-        // strAllMessages+=msg+"\n";
-        // enteredText.setText(strAllMessages);
         
         client.sendMessage(msg);
 
@@ -36,29 +44,29 @@ public class ClientGUI implements ActionListener {
         
     }
     
+    /** 
+     * Constructor forPerforms actions regarding the GUI
+     * 
+     * @param e for the action performed
+     */
     public ClientGUI(Socket socket, String username) {
         frame = new JFrame();
-        //frame.setSize(500, 400);
 
         JButton btn = new JButton("send");
         btn.addActionListener(this);
         
         enteredText = new JTextArea(10, 32);
         typedText   = new JTextField(32);
-        //adding curent username
-        //TODO add all 
-        listModel = new DefaultListModel();
+      
+        listModel = new DefaultListModel<String>();
         listModel.addElement("Online Users:");
-        // listModel.addElement(username);
-        //listModel.remove("")
 
-        usersList = new JList(listModel);
+        usersList = new JList<String>(listModel);
         
         enteredText.setEditable(false);
         usersList.setFocusable(false);
         enteredText.setBackground(Color.LIGHT_GRAY);
         typedText.addActionListener(this);
-
 
         Container content = frame.getContentPane();
         content.add(new JScrollPane(enteredText), BorderLayout.CENTER);
@@ -78,17 +86,23 @@ public class ClientGUI implements ActionListener {
             
             this.username = username;
         } catch (IOException e) {
-            closeEverything(socket, objectInputStream, objectOutputStream);
+            closeEverything();
         }
     }
 
+    
+    /** 
+     * Handles messages typed in input area
+     * 
+     * @param msg the string type in input
+     */
     public void sendMessage(String msg) {
         try{
             if(socket.isConnected()) {
                 String textToSend = msg;
                 Message messageToSend=  null;
                 if (textToSend.equals("\\exit")) {
-                    closeEverything(socket, objectInputStream, objectOutputStream);
+                    closeEverything();
                     System.exit(0);
                 } else if (textToSend.startsWith("@")) { // Whisper
                     String str[] = textToSend.split(" ", 2);
@@ -103,25 +117,32 @@ public class ClientGUI implements ActionListener {
             }
 
         }  catch (IOException e) {
-            closeEverything(socket, objectInputStream, objectOutputStream);
+            closeEverything();
         }
-     }
-     public void listenForMessage() {
+    }
+
+    /** 
+     * Creates the thread that listens for messages
+     */
+    public void listenForMessage() {
         ClientListenerThread clientListenerThread = new ClientListenerThread(socket, objectInputStream, objectOutputStream, enteredText, listModel, frame);
         Thread thread = new Thread(clientListenerThread);
         thread.start(); //waiting for broadcasted msgs
-     }
+    }
 
      
-    public void closeEverything(Socket socket, ObjectInputStream ois, ObjectOutputStream ous) {
-        
+    
+    /** 
+     * Closes socket and streams neatly
+     */
+    public void closeEverything() {
         try {
-            if (ois != null) {
-                ois.close();
+            if (objectInputStream != null) {
+                objectInputStream.close();
             }
 
-            if (ous != null) {
-                ous.close();
+            if (objectOutputStream != null) {
+                objectOutputStream.close();
             }
 
             if (socket != null) {
@@ -132,12 +153,15 @@ public class ClientGUI implements ActionListener {
         }
     }
 
+    
+    /** 
+     * Starts up client and prompts for info
+     * 
+     * @param args not used
+     * @throws IOException for creating client and socket
+     */
     public static void main(String[] args) throws IOException {
         
-        // if (args.length != 2) {
-        //     System.out.println("Usage: java Client <host_IP_address> <port_number>");
-        //     System.exit(0);
-        // }
         Socket socket= null;
         String username;
         while (true) {
@@ -159,13 +183,14 @@ public class ClientGUI implements ActionListener {
                     System.exit(0);
                 }
             }
+            Timeout timeout = new Timeout();
+            Thread t = new Thread(timeout);
             try {
-                Timeout timeout = new Timeout();
-                Thread t = new Thread(timeout);
                 t.start();
                 socket = new Socket(ip, Integer.parseInt(port));
                 t.interrupt();
             } catch (Exception e) {
+                t.interrupt();
                 JFrame frame = new JFrame();
                 JOptionPane.showMessageDialog(frame, "Invalid IP address or invalid port number");
                 continue;
@@ -178,7 +203,6 @@ public class ClientGUI implements ActionListener {
         client.objectOutputStream.flush();
         
         client.listenForMessage();
-        //client.sendMessage();
     }
 }
 

@@ -4,6 +4,9 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
+/** 
+ * Threads that handle each client
+ */
 public class ClientHandler implements Runnable {
 
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
@@ -12,6 +15,10 @@ public class ClientHandler implements Runnable {
     private ObjectOutputStream objectOutputStream;
     private String clientUsername;
 
+    /** 
+     * Constructor for this handler
+     * @param socket Is the socket that the client connects to
+     */
     public ClientHandler(Socket socket) {
         try {
             this.socket = socket;
@@ -28,6 +35,9 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /** 
+     * Checks that username is unique
+     */
     public void checkUsername() { 
         outer: while (true) {
             for (ClientHandler handler : clientHandlers) {
@@ -52,6 +62,7 @@ public class ClientHandler implements Runnable {
         
         sendMessage(new Message(clientUsername + " has entered the chat!","SERVER"));
 
+        // Send list of users to newly connected client
         String[] ls = new String[clientHandlers.size()];
         int i = 0;
         for (ClientHandler handler : clientHandlers) {
@@ -65,6 +76,9 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /** 
+     * The thread listens for messages from the client and handles it
+     */
     @Override
     public void run() {
         // run on every thread
@@ -97,7 +111,11 @@ public class ClientHandler implements Runnable {
         }
 
     }
-
+  
+    /** 
+     * Send messages with and handles some exceptions 
+     * @param messageToSend the object to send to clients
+     */
     public void sendMessage(Message messageToSend) {
         if (messageToSend.to() == null) {   // broadcast
             for (ClientHandler clientHandler : clientHandlers){
@@ -110,12 +128,13 @@ public class ClientHandler implements Runnable {
             }
         } else {    // whisper
             ClientHandler user = null;
+            // find the client to send to
             for (ClientHandler clientHandler : clientHandlers){
                 if (clientHandler.clientUsername.equals(messageToSend.to())) {
                     user = clientHandler;
                 }
             }
-            if (user != null) {
+            if (user != null) { // client found matching username
                 try{   
                     user.objectOutputStream.writeObject(messageToSend);
                     user.objectOutputStream.flush();//manual clear before it fills
@@ -127,7 +146,7 @@ public class ClientHandler implements Runnable {
                 } catch (IOException e){
                     closeEverything();
                 }
-            } else {
+            } else { // no client found matching username
                 try {
                     this.objectOutputStream.writeObject(new Message("User, \"" + messageToSend.to() + "\", does not exist.", "SERVER"));
                     this.objectOutputStream.flush();
@@ -138,6 +157,9 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /** 
+     * Neatly closes sockets and input output streams
+     */
     public void closeEverything() {
         removeClientHandler();
         try {
@@ -159,6 +181,9 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {}
     }
 
+    /** 
+     * Remove client and send messages
+     */
     public void removeClientHandler() {
         clientHandlers.remove(this);
         sendMessage(new Message(clientUsername + " has left the chat!","SERVER"));

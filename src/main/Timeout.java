@@ -1,9 +1,16 @@
+/** 
+ * Used for thread that checks for a timeout when connection to server
+ */
 public class Timeout implements Runnable {
 
-    public Timeout() {
+    /** 
+     * Empty constructor
+     */
+    public Timeout() {}
 
-    }
-
+    /** 
+     * Execution of the thread that check for timeout
+     */
     @Override
     public void run() {
 
@@ -13,8 +20,7 @@ public class Timeout implements Runnable {
             Thread.sleep(4000);
             System.out.println("Failed to connect");
             System.exit(0);
-        } catch (InterruptedException e) {
-        }
+        } catch (InterruptedException e) {}
         
     }
     
