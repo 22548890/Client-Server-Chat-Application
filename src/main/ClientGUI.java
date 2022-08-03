@@ -153,7 +153,7 @@ public class ClientGUI implements ActionListener {
             if (username == null) {
                 System.exit(0);
             }
-            while (username.isBlank() || !username.matches("^[0-9A-Za-z]*$")) {
+            while (username.isBlank() || !username.matches("^[0-9A-Za-z]*$") || username.equals("SERVER")) {
                 username = JOptionPane.showInputDialog("Enter your unique username: ", "Illegal Username!");
                 if (username == null) {
                     System.exit(0);
